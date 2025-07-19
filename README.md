@@ -42,16 +42,22 @@
 ## 📁 Project Structure
 
 journii/
-├── client/ # Frontend React app
-│ ├── components/
-│ ├── pages/
-│ ├── hooks/
-│ └── App.jsx
+│──.env.local
+├── client/                  # Frontend React application
+│   ├── components/           # Reusable UI components
+│   ├── pages/                # Page-level components
+│   ├── hooks/                # Custom React hooks
+│   ├── App.jsx               # Main app component
+│   └── index.html            # Entry HTML
 │
-├── server/ # Backend Node/Express app
-│ ├── routes/
-│ ├── controllers/
-│ ├── models/
-│ └── server.js
+├── server/                  # Backend Node.js + Express API
+│   ├── controllers/          # Business logic
+│   ├── models/               # MongoDB schema definitions
+│   ├── routes/               # API routes
+│   ├── server.js             # Main backend entry file
+│   └── config/               # Database and environment config
 │
-└── README.md
+├── .gitignore
+├── README.md
+└── package.json             # Root dependencies (if monorepo-style)
+
