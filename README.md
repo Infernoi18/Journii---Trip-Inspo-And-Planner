@@ -1,30 +1,57 @@
-# Journii WebApp Design
+# 🌍 Journii – Smart Trip Planner Web App
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+**Journii** is a full-stack travel planning platform designed to simplify your travel experience. From organizing itineraries to tracking expenses and exploring places, Journii brings your adventures to life—all in one place.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/inferno18/v0-journii-web-app-design)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/Ydg3u3HRQWM)
+---
 
-## Overview
+## ✨ Key Features
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+- 🧭 **Trip Planning**  
+  Create, manage, and view upcoming and past trips.
 
-## Deployment
+- 💸 **Expense Management**  
+  Log expenses by category, view budget summaries, and keep track of your spending during trips.
 
-Your project is live at:
+- 📌 **Save & Organize Locations**  
+  Add places to visit (cafés, restaurants, landmarks) to your trip maps.
 
-**[https://vercel.com/inferno18/v0-journii-web-app-design](https://vercel.com/inferno18/v0-journii-web-app-design)**
+- 💡 **Trip Inspirations**  
+  Discover public itineraries from fellow travelers and get inspired.
 
-## Build your app
+- 💬 **Integrated Chat Support**  
+  (Coming Soon) Get travel suggestions and itinerary tips from an AI-powered assistant.
 
-Continue building your app on:
+---
 
-**[https://v0.dev/chat/projects/Ydg3u3HRQWM](https://v0.dev/chat/projects/Ydg3u3HRQWM)**
+## 🧰 Tech Stack
 
-## How It Works
+### Frontend
+- React (with Vite)
+- Tailwind CSS
+- ShadCN/UI Components
+- Framer Motion (animations)
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+### Backend
+- Node.js + Express.js
+- MongoDB (MongoDB Atlas)
+- REST APIs
+- (Optional) OpenAI API for AI features
+
+---
+
+## 📁 Project Structure
+
+journii/
+├── client/ # Frontend React app
+│ ├── components/
+│ ├── pages/
+│ ├── hooks/
+│ └── App.jsx
+│
+├── server/ # Backend Node/Express app
+│ ├── routes/
+│ ├── controllers/
+│ ├── models/
+│ └── server.js
+│
+└── README.md
