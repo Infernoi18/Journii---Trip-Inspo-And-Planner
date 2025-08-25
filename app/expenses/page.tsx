@@ -72,7 +72,7 @@ export default function ExpensesPage() {
     fetchExpenses()
   }, [user])
 
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0)
+  const totalExpenses = expenses.reduce((sum: number, expense: Expense) => sum + expense.amount, 0)
 
   const getCategoryInfo = (category: string) => {
     return categories.find((cat) => cat.value === category) || categories[categories.length - 1]
@@ -163,8 +163,8 @@ export default function ExpensesPage() {
               <div className="text-2xl font-bold">
                 $
                 {expenses
-                  .filter((e) => new Date(e.date).getMonth() === new Date().getMonth())
-                  .reduce((sum, e) => sum + e.amount, 0).toFixed(2)}
+                  .filter((e: Expense) => new Date(e.date).getMonth() === new Date().getMonth())
+                  .reduce((sum: number, e: Expense) => sum + e.amount, 0).toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">So far</p>
             </CardContent>
@@ -202,7 +202,7 @@ export default function ExpensesPage() {
                 <div className="space-y-2">
                   <Label htmlFor="category">Category</Label>
                   <Select
-                    onValueChange={(value) => setNewExpense({ ...newExpense, category: value })}
+                    onValueChange={(value: string) => setNewExpense({ ...newExpense, category: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
@@ -269,7 +269,7 @@ export default function ExpensesPage() {
                 <p className="text-red-500 text-center">{error}</p>
             ) : (
                 <div className="space-y-4">
-                {expenses.length > 0 ? expenses.map((expense) => {
+                {expenses.length > 0 ? expenses.map((expense: Expense) => {
                     const categoryInfo = getCategoryInfo(expense.category)
                     return (
                     <div key={expense._id} className="flex items-center justify-between p-4 border rounded-lg">
