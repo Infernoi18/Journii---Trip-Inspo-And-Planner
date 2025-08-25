@@ -125,9 +125,6 @@ importers:
       lucide-react:
         specifier: ^0.454.0
         version: 0.454.0(react@19.0.0)
-      mongodb:
-        specifier: ^6.17.0
-        version: 6.17.0
       mongoose:
         specifier: latest
         version: 8.16.4

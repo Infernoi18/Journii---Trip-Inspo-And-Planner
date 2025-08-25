@@ -6,53 +6,58 @@
 
 ## ✨ Key Features
 
-- 🧭 **Trip Planning** Create, manage, and view upcoming and past trips.
+- 🧭 **Trip Planning**  
+  Create, manage, and view upcoming and past trips.
 
-- 💸 **Expense Management** Log expenses by category, view budget summaries, and keep track of your spending during trips.
+- 💸 **Expense Management**  
+  Log expenses by category, view budget summaries, and keep track of your spending during trips.
 
-- 📌 **Destination Discovery** Find and save amazing places to visit (cafés, restaurants, landmarks).
+- 📌 **Save & Organize Locations**  
+  Add places to visit (cafés, restaurants, landmarks) to your trip maps.
 
-- 👥 **Travel Community** Share your travel stories and get inspired by itineraries from fellow travelers.
+- 💡 **Trip Inspirations**  
+  Discover public itineraries from fellow travelers and get inspired.
 
-- 💬 **AI Travel Assistant** Get travel suggestions and itinerary tips from an AI-powered assistant.
+- 💬 **Integrated Chat Support**  
+  (Coming Soon) Get travel suggestions and itinerary tips from an AI-powered assistant.
 
 ---
 
 ## 🧰 Tech Stack
 
 ### Frontend
-- **Next.js (React Framework)**
-- **TypeScript**
-- **Tailwind CSS** for styling
-- **ShadCN/UI** for components
-- **tailwindcss-animate** for animations
+- React (with Vite)
+- Tailwind CSS
+- ShadCN/UI Components
+- Framer Motion (animations)
 
 ### Backend
-- **Next.js API Routes**
-- **MongoDB (with Mongoose)** for the database
-- **OpenAI API** for AI-powered features
+- Node.js + Express.js
+- MongoDB (MongoDB Atlas)
+- REST APIs
+- (Optional) OpenAI API for AI features
 
 ---
 
 ## 📁 Project Structure
 
 journii/
+│──.env.local
+├── client/                  # Frontend React application
+│   ├── components/           # Reusable UI components
+│   ├── pages/                # Page-level components
+│   ├── hooks/                # Custom React hooks
+│   ├── App.jsx               # Main app component
+│   └── index.html            # Entry HTML
 │
-├── app/
-│   ├── api/                  # Backend API routes
-│   ├── (main)/               # Main app pages (dashboard, trips, etc.)
-│   └── layout.tsx            # Root layout
+├── server/                  # Backend Node.js + Express API
+│   ├── controllers/          # Business logic
+│   ├── models/               # MongoDB schema definitions
+│   ├── routes/               # API routes
+│   ├── server.js             # Main backend entry file
+│   └── config/               # Database and environment config
 │
-├── components/
-│   ├── ui/                   # Reusable UI components from ShadCN
-│   └── providers/            # Context providers (e.g., AuthProvider)
-│
-├── models/                   # Mongoose schema definitions
-│
-├── lib/                      # Helper functions and utilities
-│
-├── public/                   # Static assets
-│
-├── .env.local                # Environment variables
-├── next.config.mjs           # Next.js configuration
-└── README.md
+├── .gitignore
+├── README.md
+└── package.json             # Root dependencies (if monorepo-style)
+
