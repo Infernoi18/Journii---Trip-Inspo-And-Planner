@@ -1,42 +1,85 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Calendar, DollarSign, Plus } from "lucide-react"
-import Link from "next/link"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DollarSign, Plus, Filter, TrendingUp, TrendingDown } from "lucide-react"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
+import { useAuth } from "@/components/providers/auth-provider"
+import { Skeleton } from "@/components/ui/skeleton"
 
-// Mock data - in real app, this would come from your API
-const trips = [
-  {
-    id: "1",
-    title: "Tokyo Adventure",
-    destinations: ["Tokyo", "Kyoto", "Osaka"],
-    dates: { start: "2024-03-15", end: "2024-03-25" },
-    status: "upcoming",
-    totalExpenses: 1200,
-    image: "/placeholder.svg?height=200&width=300",
-  },
-  {
-    id: "2",
-    title: "European Explorer",
-    destinations: ["Paris", "Rome", "Barcelona"],
-    dates: { start: "2024-02-01", end: "2024-02-14" },
-    status: "completed",
-    totalExpenses: 2100,
-    image: "/placeholder.svg?height=200&width=300",
-  },
-  {
-    id: "3",
-    title: "Weekend in NYC",
-    destinations: ["New York"],
-    dates: { start: "2024-01-20", end: "2024-01-22" },
-    status: "active",
-    totalExpenses: 450,
-    image: "/placeholder.svg?height=200&width=300",
-  },
+// Define the Expense type
+interface Expense {
+  _id: string;
+  amount: number;
+  category: "accommodation" | "food" | "transport" | "activities" | "shopping" | "other";
+  description: string;
+  date: string;
+  tripId?: string;
+}
+
+const categories = [
+  { value: "accommodation", label: "Accommodation", color: "bg-blue-500" },
+  { value: "food", label: "Food & Dining", color: "bg-green-500" },
+  { value: "transport", label: "Transportation", color: "bg-yellow-500" },
+  { value: "activities", label: "Activities", color: "bg-purple-500" },
+  { value: "shopping", label: "Shopping", color: "bg-pink-500" },
+  { value: "other", label: "Other", color: "bg-gray-500" },
 ]
 
-export default function TripsPage() {
+export default function ExpensesPage() {
+  const { user } = useAuth()
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [newExpense, setNewExpense] = useState({
+    amount: "",
+    category: "",
+    description: "",
+    date: "",
+  })
+
+  useEffect(() => {
+    if (!user) {
+      setIsLoading(false)
+      return
+    }
+
+    const fetchExpenses = async () => {
+      try {
+        const response = await fetch(`/api/expenses?userId=${user.id}`)
+        if (!response.ok) {
+          throw new Error("Failed to fetch expenses")
+        }
+        const data = await response.json()
+        setExpenses(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An unknown error occurred")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchExpenses()
+  }, [user])
+
+  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0)
+
+  const getCategoryInfo = (category: string) => {
+    return categories.find((cat) => cat.value === category) || categories[categories.length - 1]
+  }
+
+  // TODO: Implement the handleAddExpense function
+  const handleAddExpense = async () => {
+    // This is where you'll add the logic to POST the new expense to the API
+    console.log("Adding expense:", newExpense)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardNav />
@@ -44,86 +87,168 @@ export default function TripsPage() {
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">My Trips</h1>
-            <p className="text-gray-600">Manage and track all your travel adventures</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Expenses</h1>
+            <p className="text-gray-600">Track and manage your travel expenses</p>
           </div>
-          <Link href="/trips/new">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Trip
-            </Button>
-          </Link>
+          <Button onClick={() => setShowAddForm(!showAddForm)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Expense
+          </Button>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {trips.map((trip) => (
-            <Card key={trip.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="aspect-video bg-gray-200 relative">
-                <img src={trip.image || "/placeholder.svg"} alt={trip.title} className="w-full h-full object-cover" />
-                <Badge
-                  className={`absolute top-2 right-2 ${
-                    trip.status === "active"
-                      ? "bg-green-500"
-                      : trip.status === "upcoming"
-                        ? "bg-blue-500"
-                        : "bg-gray-500"
-                  }`}
-                >
-                  {trip.status}
-                </Badge>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${totalExpenses.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">Across all trips</p>
+            </CardContent>
+          </Card>
+           {/* Other summary cards can be updated similarly */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">This Month</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                $
+                {expenses
+                  .filter((e) => new Date(e.date).getMonth() === new Date().getMonth())
+                  .reduce((sum, e) => sum + e.amount, 0).toFixed(2)}
               </div>
+              <p className="text-xs text-muted-foreground">So far</p>
+            </CardContent>
+          </Card>
 
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">{trip.title}</CardTitle>
-                <CardDescription>
-                  <div className="flex items-center space-x-2 mb-2">
-                    <MapPin className="h-4 w-4" />
-                    <span>{trip.destinations.join(", ")}</span>
-                  </div>
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>
-                      {trip.dates.start} - {trip.dates.end}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <DollarSign className="h-4 w-4" />
-                    <span>${trip.totalExpenses}</span>
-                  </div>
-                </CardDescription>
-              </CardHeader>
-
-              <CardContent>
-                <div className="flex space-x-2">
-                  <Link href={`/trips/${trip.id}`} className="flex-1">
-                    <Button variant="outline" className="w-full bg-transparent">
-                      View Details
-                    </Button>
-                  </Link>
-                  <Link href={`/trips/${trip.id}/edit`}>
-                    <Button variant="ghost" size="sm">
-                      Edit
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Average per Trip</CardTitle>
+              <TrendingDown className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">$...</div>
+              <p className="text-xs text-muted-foreground">Calculation needed</p>
+            </CardContent>
+          </Card>
         </div>
 
-        {trips.length === 0 && (
-          <div className="text-center py-12">
-            <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No trips yet</h3>
-            <p className="text-gray-600 mb-4">Start planning your first adventure!</p>
-            <Link href="/trips/new">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Your First Trip
-              </Button>
-            </Link>
-          </div>
+
+        {/* Add Expense Form */}
+        {showAddForm && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Add New Expense</CardTitle>
+              <CardDescription>Record a new expense for your trip</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Amount</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    placeholder="0.00"
+                    value={newExpense.amount}
+                    onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select
+                    value={newExpense.category}
+                    onValueChange={(value) => setNewExpense({ ...newExpense, category: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.value} value={category.value}>
+                          {category.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Input
+                    id="description"
+                    placeholder="What was this for?"
+                    value={newExpense.description}
+                    onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="date">Date</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={newExpense.date}
+                    onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex space-x-2 mt-4">
+                <Button onClick={handleAddExpense}>Add Expense</Button>
+                <Button variant="outline" onClick={() => setShowAddForm(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )}
+
+        {/* Expenses List */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Recent Expenses</CardTitle>
+                <CardDescription>Your latest travel expenses</CardDescription>
+              </div>
+              <Button variant="outline" size="sm">
+                <Filter className="h-4 w-4 mr-2" />
+                Filter
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+                <div className="space-y-4">
+                    {Array.from({length: 3}).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
+                </div>
+            ) : error ? (
+                <p className="text-red-500 text-center">{error}</p>
+            ) : (
+                <div className="space-y-4">
+                {expenses.map((expense) => {
+                    const categoryInfo = getCategoryInfo(expense.category)
+                    return (
+                    <div key={expense._id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center space-x-4">
+                        <div className={`w-3 h-3 rounded-full ${categoryInfo.color}`}></div>
+                        <div>
+                            <p className="font-medium">{expense.description}</p>
+                            <p className="text-sm text-gray-500">{new Date(expense.date).toLocaleDateString()}</p>
+                        </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                        <Badge variant="outline">{categoryInfo.label}</Badge>
+                        <span className="font-bold text-lg">${expense.amount.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    )
+                })}
+                </div>
+            )}
+          </CardContent>
+        </Card>
       </main>
     </div>
   )

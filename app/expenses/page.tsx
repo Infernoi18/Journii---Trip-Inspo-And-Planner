@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -9,14 +9,19 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DollarSign, Plus, Filter, TrendingUp, TrendingDown } from "lucide-react"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
+import { useAuth } from "@/components/providers/auth-provider"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from "@/hooks/use-toast"
 
-// Mock data
-const expenses = [
-  { id: "1", amount: 120, category: "accommodation", description: "Hotel booking", date: "2024-01-15", tripId: "1" },
-  { id: "2", amount: 45, category: "food", description: "Dinner at local restaurant", date: "2024-01-16", tripId: "1" },
-  { id: "3", amount: 25, category: "transport", description: "Taxi to airport", date: "2024-01-17", tripId: "1" },
-  { id: "4", amount: 200, category: "activities", description: "Museum tickets", date: "2024-01-18", tripId: "2" },
-]
+// Define the Expense type
+interface Expense {
+  _id: string;
+  amount: number;
+  category: "accommodation" | "food" | "transport" | "activities" | "shopping" | "other";
+  description: string;
+  date: string;
+  tripId?: string;
+}
 
 const categories = [
   { value: "accommodation", label: "Accommodation", color: "bg-blue-500" },
@@ -28,6 +33,12 @@ const categories = [
 ]
 
 export default function ExpensesPage() {
+  const { user } = useAuth()
+  const { toast } = useToast()
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [newExpense, setNewExpense] = useState({
     amount: "",
@@ -36,10 +47,83 @@ export default function ExpensesPage() {
     date: "",
   })
 
+  useEffect(() => {
+    if (!user) {
+      setIsLoading(false)
+      return
+    }
+
+    const fetchExpenses = async () => {
+      setIsLoading(true)
+      try {
+        const response = await fetch(`/api/expenses?userId=${user.id}`)
+        if (!response.ok) {
+          throw new Error("Failed to fetch expenses")
+        }
+        const data = await response.json()
+        setExpenses(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An unknown error occurred")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchExpenses()
+  }, [user])
+
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0)
 
   const getCategoryInfo = (category: string) => {
     return categories.find((cat) => cat.value === category) || categories[categories.length - 1]
+  }
+
+  const handleAddExpense = async () => {
+    if (!user) {
+        toast({ title: "Error", description: "You must be logged in to add an expense.", variant: "destructive" });
+        return;
+    }
+
+    // Basic Validation
+    if (!newExpense.amount || !newExpense.category || !newExpense.description || !newExpense.date) {
+        toast({ title: "Missing Fields", description: "Please fill out all required fields.", variant: "destructive" });
+        return;
+    }
+    
+    setIsSubmitting(true);
+
+    try {
+        const response = await fetch('/api/expenses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ...newExpense,
+                userId: user.id,
+                amount: parseFloat(newExpense.amount)
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to add expense");
+        }
+
+        const createdExpense = await response.json();
+        
+        // Add new expense to the top of the list
+        setExpenses([createdExpense, ...expenses]);
+
+        toast({ title: "Success!", description: "Your expense has been added." });
+        
+        // Reset form and hide it
+        setNewExpense({ amount: "", category: "", description: "", date: "" });
+        setShowAddForm(false);
+
+    } catch (err) {
+        toast({ title: "Error", description: err instanceof Error ? err.message : "An unknown error occurred", variant: "destructive" });
+    } finally {
+        setIsSubmitting(false);
+    }
   }
 
   return (
@@ -66,14 +150,10 @@ export default function ExpensesPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${totalExpenses}</div>
-              <p className="text-xs text-muted-foreground">
-                <TrendingUp className="inline h-3 w-3 mr-1" />
-                +12% from last month
-              </p>
+              <div className="text-2xl font-bold">${totalExpenses.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">Across all trips</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">This Month</CardTitle>
@@ -84,27 +164,25 @@ export default function ExpensesPage() {
                 $
                 {expenses
                   .filter((e) => new Date(e.date).getMonth() === new Date().getMonth())
-                  .reduce((sum, e) => sum + e.amount, 0)}
+                  .reduce((sum, e) => sum + e.amount, 0).toFixed(2)}
               </div>
-              <p className="text-xs text-muted-foreground">4 transactions</p>
+              <p className="text-xs text-muted-foreground">So far</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Average per Trip</CardTitle>
-              <TrendingDown className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
+               <TrendingDown className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${Math.round(totalExpenses / 3)}</div>
-              <p className="text-xs text-muted-foreground">Based on 3 trips</p>
+              <div className="text-2xl font-bold">{expenses.length}</div>
+              <p className="text-xs text-muted-foreground">Across all trips</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Add Expense Form */}
         {showAddForm && (
-          <Card className="mb-8">
+         <Card className="mb-8">
             <CardHeader>
               <CardTitle>Add New Expense</CardTitle>
               <CardDescription>Record a new expense for your trip</CardDescription>
@@ -124,7 +202,6 @@ export default function ExpensesPage() {
                 <div className="space-y-2">
                   <Label htmlFor="category">Category</Label>
                   <Select
-                    value={newExpense.category}
                     onValueChange={(value) => setNewExpense({ ...newExpense, category: value })}
                   >
                     <SelectTrigger>
@@ -159,7 +236,9 @@ export default function ExpensesPage() {
                 </div>
               </div>
               <div className="flex space-x-2 mt-4">
-                <Button>Add Expense</Button>
+                <Button onClick={handleAddExpense} disabled={isSubmitting}>
+                  {isSubmitting ? "Adding..." : "Add Expense"}
+                </Button>
                 <Button variant="outline" onClick={() => setShowAddForm(false)}>
                   Cancel
                 </Button>
@@ -168,7 +247,6 @@ export default function ExpensesPage() {
           </Card>
         )}
 
-        {/* Expenses List */}
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
@@ -183,26 +261,36 @@ export default function ExpensesPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {expenses.map((expense) => {
-                const categoryInfo = getCategoryInfo(expense.category)
-                return (
-                  <div key={expense.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-3 h-3 rounded-full ${categoryInfo.color}`}></div>
-                      <div>
-                        <p className="font-medium">{expense.description}</p>
-                        <p className="text-sm text-gray-500">{expense.date}</p>
-                      </div>
+            {isLoading ? (
+                <div className="space-y-4">
+                    {Array.from({length: 3}).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
+                </div>
+            ) : error ? (
+                <p className="text-red-500 text-center">{error}</p>
+            ) : (
+                <div className="space-y-4">
+                {expenses.length > 0 ? expenses.map((expense) => {
+                    const categoryInfo = getCategoryInfo(expense.category)
+                    return (
+                    <div key={expense._id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center space-x-4">
+                        <div className={`w-3 h-3 rounded-full ${categoryInfo.color}`}></div>
+                        <div>
+                            <p className="font-medium">{expense.description}</p>
+                            <p className="text-sm text-gray-500">{new Date(expense.date).toLocaleDateString()}</p>
+                        </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                        <Badge variant="outline">{categoryInfo.label}</Badge>
+                        <span className="font-bold text-lg">${expense.amount.toFixed(2)}</span>
+                        </div>
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <Badge variant="outline">{categoryInfo.label}</Badge>
-                      <span className="font-bold text-lg">${expense.amount}</span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+                    )
+                }) : (
+                  <p className="text-center text-gray-500 py-8">No expenses found. Add one to get started!</p>
+                )}
+                </div>
+            )}
           </CardContent>
         </Card>
       </main>
